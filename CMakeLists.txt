@@ -1,0 +1,41 @@
+cmake_minimum_required(VERSION 3.10)
+project(VividRender LANGUAGES C CXX)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# GLFW
+find_package(glfw3 3.3 REQUIRED)
+
+# 强制使用 GLVND
+if(POLICY CMP0072)
+  cmake_policy(SET CMP0072 NEW)
+endif()
+set(OpenGL_GL_PREFERENCE GLVND)
+find_package(OpenGL REQUIRED)
+
+# --- 新增：FetchContent 拉取 GLAD ---
+include(FetchContent)
+FetchContent_Declare(
+  glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+  GIT_TAG        v0.1.36
+)
+FetchContent_MakeAvailable(glad)
+
+# 可执行文件
+add_executable(VividRender src/main.cpp)
+
+# 链接：GLFW、OpenGL、GLAD
+target_link_libraries(VividRender
+  PRIVATE
+    glfw
+    OpenGL::GL
+    glad
+    dl
+)
+target_include_directories(VividRender
+  PRIVATE
+    ${glad_SOURCE_DIR}/include
+)
