@@ -24,8 +24,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glad)
 
-# 可执行文件
-add_executable(VividRender src/main.cpp)
+# 添加头文件搜索路径
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+ # 可执行文件
+add_executable(VividRender
+  src/main.cpp
+  src/Device.h src/CommandBuffer.h
+  src/OpenGLDevice.h src/OpenGLDevice.cpp
+  src/OpenGLCommandBuffer.h src/OpenGLCommandBuffer.cpp
+)
 
 # 链接：GLFW、OpenGL、GLAD
 target_link_libraries(VividRender
