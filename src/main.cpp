@@ -39,6 +39,8 @@ int main() {
     OpenGLDevice device(window);
     ICommandBuffer* cmd = device.getCommandBuffer();
 
+    // PipelineState pipeline("shaders/simple.vert", "shaders/simple.frag");
+
     // 主循环
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

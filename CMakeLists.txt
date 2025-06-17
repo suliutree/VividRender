@@ -30,6 +30,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
  # 可执行文件
 add_executable(VividRender
   src/main.cpp
+  src/Shader.h src/Shader.cpp
+  src/Pipeline.h src/Pipeline.cpp
   src/Device.h src/CommandBuffer.h
   src/OpenGLDevice.h src/OpenGLDevice.cpp
   src/OpenGLCommandBuffer.h src/OpenGLCommandBuffer.cpp
