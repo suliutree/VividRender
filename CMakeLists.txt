@@ -30,11 +30,19 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
  # 可执行文件
 add_executable(VividRender
   src/main.cpp
+  src/VertexBuffer.h src/OpenGLVertexBuffer.h src/OpenGLVertexBuffer.cpp
   src/Shader.h src/Shader.cpp
   src/Pipeline.h src/Pipeline.cpp
   src/Device.h src/CommandBuffer.h
   src/OpenGLDevice.h src/OpenGLDevice.cpp
   src/OpenGLCommandBuffer.h src/OpenGLCommandBuffer.cpp
+)
+
+# 构建完毕后，把项目根的 shaders 目录拷贝到可执行文件所在目录
+add_custom_command(TARGET VividRender POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/shaders
+    $<TARGET_FILE_DIR:VividRender>/shaders
 )
 
 # 链接：GLFW、OpenGL、GLAD

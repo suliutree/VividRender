@@ -8,4 +8,5 @@ public:
     virtual ~OpenGLCommandBuffer() = default;
 
     void clear() override;
+    void draw(unsigned int vertexCount) override;
 };

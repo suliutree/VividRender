@@ -4,6 +4,9 @@
 #include <iostream>
 
 #include "OpenGLDevice.h"
+#include "Pipeline.h"
+#include "VertexBuffer.h"
+#include "OpenGLVertexBuffer.h"
 
 int main() {
     if (!glfwInit()) {
@@ -39,7 +42,17 @@ int main() {
     OpenGLDevice device(window);
     ICommandBuffer* cmd = device.getCommandBuffer();
 
-    // PipelineState pipeline("shaders/simple.vert", "shaders/simple.frag");
+    // 三角形：pos(x,y) + color(r,g,b)
+    float vertices[] = {
+        0.0f,  0.5f,   1.0f, 0.0f, 0.0f,  // 顶点 1：红
+        0.5f, -0.5f,   0.0f, 1.0f, 0.0f,  // 顶点 2：绿
+        -0.5f, -0.5f,   0.0f, 0.0f, 1.0f   // 顶点 3：蓝
+    };
+    // 1. 创建管线
+    PipelineState pipeline("shaders/simple.vert", "shaders/simple.frag");
+    // 2. 创建顶点缓冲
+    IVertexBuffer* triangleVB = new OpenGLVertexBuffer(vertices, sizeof(vertices));
+
 
     // 主循环
     while (!glfwWindowShouldClose(window)) {
@@ -47,9 +60,16 @@ int main() {
 
         device.beginFrame();
         cmd->clear();
-        // —— 这里可以插入更多渲染命令 —— //
+        
+        pipeline.bind();
+        triangleVB->bind();
+        cmd->draw(3);    // 绘制 3 个顶点
+        pipeline.unbind();
+
         device.endFrame();
     }
+
+    delete triangleVB;
 
     glfwDestroyWindow(window);
     glfwTerminate();
