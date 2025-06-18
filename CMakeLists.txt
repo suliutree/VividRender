@@ -30,6 +30,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
  # 可执行文件
 add_executable(VividRender
   src/main.cpp
+  src/RenderPass.h
+  src/RenderGraph.h src/RenderGraph.cpp
+  src/ClearPass.h   src/ClearPass.cpp
+  src/TrianglePass.h src/TrianglePass.cpp
   src/VertexBuffer.h src/OpenGLVertexBuffer.h src/OpenGLVertexBuffer.cpp
   src/Shader.h src/Shader.cpp
   src/Pipeline.h src/Pipeline.cpp

@@ -7,6 +7,9 @@
 #include "Pipeline.h"
 #include "VertexBuffer.h"
 #include "OpenGLVertexBuffer.h"
+#include "RenderGraph.h"
+#include "ClearPass.h"
+#include "TrianglePass.h"
 
 int main() {
     if (!glfwInit()) {
@@ -53,19 +56,18 @@ int main() {
     // 2. 创建顶点缓冲
     IVertexBuffer* triangleVB = new OpenGLVertexBuffer(vertices, sizeof(vertices));
 
+    RenderGraph graph;
+    graph.addPass(std::make_shared<ClearPass>());
+    graph.addPass(std::make_shared<TrianglePass>(&pipeline, triangleVB));
+
 
     // 主循环
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         device.beginFrame();
-        cmd->clear();
-        
-        pipeline.bind();
-        triangleVB->bind();
-        cmd->draw(3);    // 绘制 3 个顶点
-        pipeline.unbind();
-
+        // 由 RenderGraph 按依赖自动执行所有 Pass
+        graph.execute(&device);
         device.endFrame();
     }
 
