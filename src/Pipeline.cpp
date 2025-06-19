@@ -2,10 +2,22 @@
 #include "Shader.h"
 #include <iostream>
 
-PipelineState::PipelineState(const std::string& vertPath, const std::string& fragPath) {
+PipelineState::PipelineState(const std::string& vertPath, const std::string& fragPath)
+    : _vsPath(vertPath), _fsPath(fragPath)
+{
+
+}
+
+PipelineState::~PipelineState() {
+    if (programID) {
+        glDeleteProgram(programID);
+    }
+}
+
+void PipelineState::initializeGL() {
     // 1. 编译顶点/片段着色器
-    GLuint vert = Shader::compileFromFile(vertPath, GL_VERTEX_SHADER);
-    GLuint frag = Shader::compileFromFile(fragPath, GL_FRAGMENT_SHADER);
+    GLuint vert = Shader::compileFromFile(_vsPath, GL_VERTEX_SHADER);
+    GLuint frag = Shader::compileFromFile(_fsPath, GL_FRAGMENT_SHADER);
     if (vert == 0 || frag == 0) {
         std::cerr << "Failed to compile shaders\n";
         return;
@@ -27,12 +39,6 @@ PipelineState::PipelineState(const std::string& vertPath, const std::string& fra
     glDetachShader(programID, frag);
     glDeleteShader(vert);
     glDeleteShader(frag);
-}
-
-PipelineState::~PipelineState() {
-    if (programID) {
-        glDeleteProgram(programID);
-    }
 }
 
 bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {
@@ -63,10 +69,10 @@ bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {
     return true;
 }
 
-void PipelineState::bind() const {
-    glUseProgram(programID);
-}
+// void PipelineState::bind() const {
+//     glUseProgram(programID);
+// }
 
-void PipelineState::unbind() const {
-    glUseProgram(0);
-}
+// void PipelineState::unbind() const {
+//     glUseProgram(0);
+// }

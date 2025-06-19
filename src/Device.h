@@ -4,10 +4,15 @@
 class IDevice {
 public:
     virtual ~IDevice() = default;
-    /// 每帧开始时调用：可以做清屏之前的状态设置
-    virtual void beginFrame() = 0;
-    /// 获取当前帧使用的命令缓冲区接口
-    virtual ICommandBuffer* getCommandBuffer() = 0;
-    /// 每帧结束时调用：提交命令、交换缓冲
-    virtual void endFrame() = 0;
+
+    /// 主线程调用：开始一帧的录制。
+    /// 内部会等待渲染线程完成对可用资源的占用。
+    /// 返回一个可供录制的命令缓冲区。
+    virtual ICommandBuffer* beginFrame() = 0;
+
+    /// 主线程调用：提交已录制完成的命令缓冲区。
+    virtual void endFrame(ICommandBuffer* cmd) = 0;
+    
+    /// 请求关闭渲染器
+    virtual void shutdown() = 0;
 };

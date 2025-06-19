@@ -9,8 +9,8 @@ public:
     /// 注册一个通道
     void addPass(std::shared_ptr<RenderPass> pass);
 
-    /// 依据依赖执行所有通道，并清空已执行列表
-    void execute(IDevice* device);
+    /// 接受一个命令缓冲区，并在其上录制所有 Pass 的命令
+    void execute(IDevice* device, ICommandBuffer* cmd);
 
 private:
     std::vector<std::shared_ptr<RenderPass>> passes;

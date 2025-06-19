@@ -24,12 +24,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glad)
 
+find_package(Threads REQUIRED)
+
 # 添加头文件搜索路径
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
  # 可执行文件
 add_executable(VividRender
   src/main.cpp
+  src/CommandQueue.h
   src/RenderPass.h
   src/RenderGraph.h src/RenderGraph.cpp
   src/ClearPass.h   src/ClearPass.cpp
@@ -56,6 +59,7 @@ target_link_libraries(VividRender
     OpenGL::GL
     glad
     dl
+    Threads::Threads
 )
 target_include_directories(VividRender
   PRIVATE
