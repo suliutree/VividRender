@@ -96,7 +96,6 @@ int main() {
         // - 输出: FinalFrame
         graph.addPass(trianglePass, {RenderResource::ClearedRenderTarget}, {RenderResource::FinalFrame});
 
-        
         // 1. 开始录制
         ICommandBuffer* cmd = device.beginFrame();
 

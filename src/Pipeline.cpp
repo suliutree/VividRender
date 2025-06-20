@@ -68,11 +68,3 @@ bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {
     }
     return true;
 }
-
-// void PipelineState::bind() const {
-//     glUseProgram(programID);
-// }
-
-// void PipelineState::unbind() const {
-//     glUseProgram(0);
-// }

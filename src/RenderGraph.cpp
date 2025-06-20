@@ -15,10 +15,8 @@ void RenderGraph::addPass(
 
 void RenderGraph::execute(IDevice* device, ICommandBuffer* cmd) {
     std::vector<PassNode> remainingNodes = nodes;
-    // 使用新的强类型资源枚举
     std::unordered_set<RenderResource> availableResources;
 
-    // 拓扑排序和执行的整体逻辑不变
     size_t executedCount = 0;
     // 防止因循环依赖导致的无限循环
     size_t maxLoops = nodes.size(); 

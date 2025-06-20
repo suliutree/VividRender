@@ -2,8 +2,8 @@
 #include <iostream>
 
 OpenGLDevice::OpenGLDevice(GLFWwindow* window) : _window(window) {
-    // 主线程释放对 OpenGL Context 的控制权
-    glfwMakeContextCurrent(nullptr);
+    // // 主线程释放对 OpenGL Context 的控制权
+    // glfwMakeContextCurrent(nullptr);
 
     // 启动渲染线程，并将 window 的上下文传递给它
     _renderThread = std::thread(&OpenGLDevice::renderThreadMain, this);
@@ -27,18 +27,19 @@ void OpenGLDevice::shutdown() {
 }
 
 ICommandBuffer* OpenGLDevice::beginFrame() {
-    // 1. 等待当前要使用的命令缓冲区关联的 Fence
-    // 这确保了我们不会在 GPU 仍在使用上一轮的资源时就去修改它
+    // 检查当前帧索引 _currentFrame 是否有一个与之关联的 Fence。
+    // 第一次启动时没有，所以会跳过。但在第二轮循环后，这里就会有上一轮渲染线程留下的 Fence。
     if (_fences[_currentFrame]) {
         GLenum waitResult;
         do {
+            // 这是主线程（Client）在等待 GPU。它会阻塞主线程的执行，直到 _fences[_currentFrame] 这个 Fence 被 GPU 触发。
             waitResult = glClientWaitSync(_fences[_currentFrame], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000); // 等待1秒
         } while (waitResult == GL_TIMEOUT_EXPIRED || waitResult == GL_WAIT_FAILED);
-        glDeleteSync(_fences[_currentFrame]);
+        glDeleteSync(_fences[_currentFrame]); // 一旦等待成功，意味着这个 Fence 已经完成了它的历史使命，我们就可以安全地删除它，释放资源。
         _fences[_currentFrame] = nullptr;
     }
 
-    // 2. 获取当前帧可用的命令缓冲区并重置
+    // 对应的旧数据已经被 GPU 完全消费，可以安全地被覆写
     auto* cmd = &_commandBuffers[_currentFrame];
     cmd->reset();
     
@@ -84,37 +85,24 @@ void OpenGLDevice::renderThreadMain() {
 
             // --- 调试打印 1: 检查收到的命令 ---
             if (cmd) {
-                std::cout << "[Render Thread] Popped a command buffer." << std::endl;
+                // std::cout << "[Render Thread] Popped a command buffer." << std::endl;
             } else {
                 std::cerr << "[Render Thread] Popped a NULL command buffer!" << std::endl;
                 continue; // 如果是空的就不要继续执行
             }
 
-            std::cout << "render therad 001: " << glGetError() << std::endl;
-
             // 2. 从队列中获取到一个命令缓冲区，并执行其中的所有命令
             static_cast<OpenGLCommandBuffer*>(cmd)->executeAll();
-
-            std::cout << "render therad 002: " << glGetError() << std::endl;
-
 
             // 3. 交换缓冲区
             glfwSwapBuffers(_window);
 
-            std::cout << "render therad 003: " << glGetError() << std::endl;
-
-
-            // --- 调试打印 2: 确认执行完毕 ---
-            std::cout << "[Render Thread] Executed commands, swapping buffers..." << std::endl;
-
             // 4. 插入一个 Fence，用于主线程下一轮的同步
             // 这个 Fence 会在所有已提交的 GL 命令执行完毕后被触发
-            _fences[frameIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            _fences[frameIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0); // 当执行完在此之前提交的所有命令后，请将这个 Fence 标记为‘已触发’（Signaled）状态
 
             // 5. 更新索引
             frameIndex = (frameIndex + 1) % NUM_FRAMES_IN_FLIGHT;
-
-            std::cout << "render therad 004: " << glGetError() << std::endl;
         }
     }
     

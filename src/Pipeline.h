@@ -11,11 +11,6 @@ public:
     PipelineState(const std::string& vertPath, const std::string& fragPath);
     ~PipelineState();
 
-    // /// 绑定（使用）该 Program
-    // void bind() const;
-    // /// 解绑（回到固定管线或 0）
-    // void unbind() const;
-
     void initializeGL() override;
 
     GLuint getProgramID() const { return programID; }
