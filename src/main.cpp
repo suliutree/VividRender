@@ -86,8 +86,16 @@ int main() {
         
         // RenderGraph 每次执行都会清空，所以每帧重新添加
         RenderGraph graph;
-        graph.addPass(clearPass);
-        graph.addPass(trianglePass);
+        // ClearPass:
+        // - 输入: 无
+        // - 输出: ClearedRenderTarget
+        graph.addPass(clearPass, {}, {RenderResource::ClearedRenderTarget});
+
+        // TrianglePass:
+        // - 输入: ClearedRenderTarget
+        // - 输出: FinalFrame
+        graph.addPass(trianglePass, {RenderResource::ClearedRenderTarget}, {RenderResource::FinalFrame});
+
         
         // 1. 开始录制
         ICommandBuffer* cmd = device.beginFrame();

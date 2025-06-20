@@ -13,12 +13,6 @@ public:
     /// 通道名称（可用于日志或调试）
     virtual const std::string& getName() const = 0;
 
-    /// 本通道所需的输入资源（名字任意，只要保持一致即可）
-    virtual const std::vector<std::string>& getInputs() const = 0;
-
-    /// 本通道会产出的资源
-    virtual const std::vector<std::string>& getOutputs() const = 0;
-
     /// 真正执行渲染逻辑
     virtual void execute(IDevice* device, ICommandBuffer* cmd) = 0;
 };
