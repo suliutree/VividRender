@@ -13,16 +13,30 @@ if(POLICY CMP0072)
   cmake_policy(SET CMP0072 NEW)
 endif()
 set(OpenGL_GL_PREFERENCE GLVND)
-find_package(OpenGL REQUIRED)
 
-# --- 新增：FetchContent 拉取 GLAD ---
-include(FetchContent)
-FetchContent_Declare(
-  glad
-  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-  GIT_TAG        v0.1.36
+# Find OpenGL framework on macOS
+if(APPLE)
+  find_library(COCOA_LIBRARY Cocoa)
+  find_library(OpenGL_LIBRARY OpenGL)
+  find_library(IOKIT_LIBRARY IOKit)
+  find_library(COREVIDEO_LIBRARY CoreVideo)
+
+  set(OPENGL_LIBRARIES
+    ${OpenGL_LIBRARY}
+    ${COCOA_LIBRARY}
+    ${IOKIT_LIBRARY}
+    ${COREVIDEO_LIBRARY}
+  )
+else()
+  find_package(OpenGL REQUIRED)
+endif()
+
+add_library(glad STATIC
+  third_party/glad/src/glad.c
 )
-FetchContent_MakeAvailable(glad)
+target_include_directories(glad PUBLIC
+  third_party/glad/include
+)
 
 find_package(Threads REQUIRED)
 
@@ -56,12 +70,8 @@ add_custom_command(TARGET VividRender POST_BUILD
 target_link_libraries(VividRender
   PRIVATE
     glfw
-    OpenGL::GL
     glad
+    ${OPENGL_LIBRARIES}  # Linking OpenGL on macOS
     dl
     Threads::Threads
-)
-target_include_directories(VividRender
-  PRIVATE
-    ${glad_SOURCE_DIR}/include
 )
