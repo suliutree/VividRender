@@ -67,8 +67,8 @@ int main() {
     // 4. 创建设备，它会将 renderWindow 的 Context 转移到渲染线程
     //    注意：我们将 renderWindow 传递给它
     OpenGLDevice device(renderWindow);
-    device.registerResource(&pipeline);
     device.registerResource(glTriangleVB);
+    device.registerResource(&pipeline);
 
     // // 5. 主线程释放其上下文的控制权，以避免任何意外的 GL 调用
     // //    这是一个好习惯，确保主线程只在需要时（比如动态加载资源）才去绑定上下文

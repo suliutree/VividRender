@@ -63,7 +63,7 @@ bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {
         glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logLen);
         std::string log(logLen, ' ');
         glGetProgramInfoLog(programID, logLen, nullptr, &log[0]);
-        std::cerr << "Program validation error:\n" << log << "\n";
+        std::cerr << "Program validation error: " << log << "\n";
         return false;
     }
     return true;
