@@ -23,6 +23,13 @@ public:
     /// 清空录制的命令列表，为下一帧做准备
     void reset();
 
+    void setFrameIndex(int idx) {
+        _frameIndex = idx;
+    }
+    int getFrameIndex() const { return _frameIndex; }
+
+    int _frameIndex = -1;
+
 private:
     std::vector<std::function<void()>> _commands;
 };

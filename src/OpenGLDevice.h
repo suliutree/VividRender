@@ -46,4 +46,6 @@ private:
     int _currentFrame = 0;
 
     std::atomic<bool> _isRunning{true};
+
+    bool hasSubmitted[NUM_FRAMES_IN_FLIGHT] = { false };
 };

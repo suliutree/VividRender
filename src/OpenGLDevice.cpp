@@ -27,9 +27,8 @@ void OpenGLDevice::shutdown() {
 }
 
 ICommandBuffer* OpenGLDevice::beginFrame() {
-    // 检查当前帧索引 _currentFrame 是否有一个与之关联的 Fence。
-    // 第一次启动时没有，所以会跳过。但在第二轮循环后，这里就会有上一轮渲染线程留下的 Fence。
-    if (_fences[_currentFrame]) {
+    // 只在初始化时为 false，在渲染线程首次插入 fence 后设为 true，之后保持 true，用来区分“第一次”和“之后每次”都要等待 fence 的逻辑
+    if (hasSubmitted[_currentFrame]) {
         GLenum waitResult;
         do {
             // 这是主线程（Client）在等待 GPU。它会阻塞主线程的执行，直到 _fences[_currentFrame] 这个 Fence 被 GPU 触发。
@@ -40,8 +39,14 @@ ICommandBuffer* OpenGLDevice::beginFrame() {
     }
 
     // 对应的旧数据已经被 GPU 完全消费，可以安全地被覆写
+    // 拿到本次要用的命令缓冲区
     auto* cmd = &_commandBuffers[_currentFrame];
+
     cmd->reset();
+
+    // 记录“这个命令缓冲区对应的是哪一路槽位”
+    // —— 就是把主线程当前的 _currentFrame 写给它
+    static_cast<OpenGLCommandBuffer*>(cmd)->setFrameIndex(_currentFrame);
     
     return cmd;
 }
@@ -78,7 +83,6 @@ void OpenGLDevice::renderThreadMain() {
         res->initializeGL();
     }
     
-    int frameIndex = 0;
     while (_isRunning.load()) {
         ICommandBuffer* cmd;
         if (_commandQueue.wait_and_pop(cmd)) {
@@ -97,12 +101,13 @@ void OpenGLDevice::renderThreadMain() {
             // 3. 交换缓冲区
             glfwSwapBuffers(_window);
 
+            int idx = static_cast<OpenGLCommandBuffer*>(cmd)->getFrameIndex();
+
             // 4. 插入一个 Fence，用于主线程下一轮的同步
             // 这个 Fence 会在所有已提交的 GL 命令执行完毕后被触发
-            _fences[frameIndex] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0); // 当执行完在此之前提交的所有命令后，请将这个 Fence 标记为‘已触发’（Signaled）状态
+            _fences[idx] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0); // 当执行完在此之前提交的所有命令后，请将这个 Fence 标记为‘已触发’（Signaled）状态
 
-            // 5. 更新索引
-            frameIndex = (frameIndex + 1) % NUM_FRAMES_IN_FLIGHT;
+            hasSubmitted[idx] = true;
         }
     }
     
