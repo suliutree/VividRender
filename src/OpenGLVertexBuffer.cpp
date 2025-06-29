@@ -24,9 +24,7 @@ void OpenGLVertexBuffer::initializeGL(){
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // 在 OpenGL Core Profile（3.3 及以上核心模式）中，任何与顶点属性相关的绘制操作都必须在绑定一个 VAO（Vertex Array Object）的前提下进行，
-    // 即使你不打算使用属性或只绘制全屏四边形，也必须有一个 VAO 绑定，否则状态是不完整的。
-    // glBindVertexArray(0);
+    glBindVertexArray(0);
 
     // 上传完后，可选地把 CPU 侧数据释放
     _cpuData.clear();

@@ -60,7 +60,7 @@ void OpenGLDevice::endFrame(ICommandBuffer* cmd) {
 }
 
 void OpenGLDevice::renderThreadMain() {
-    // 1. 渲染线程获取 OpenGL Context
+    // 渲染线程获取 OpenGL Context
     glfwMakeContextCurrent(_window);
     
     // 初始化 GLAD

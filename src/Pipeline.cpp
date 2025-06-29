@@ -54,17 +54,19 @@ bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {
         return false;
     }
 
-    // 可选：验证
-    glValidateProgram(programID);
-    GLint valStatus;
-    glGetProgramiv(programID, GL_VALIDATE_STATUS, &valStatus);
-    if (valStatus != GL_TRUE) {
-        GLint logLen;
-        glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logLen);
-        std::string log(logLen, ' ');
-        glGetProgramInfoLog(programID, logLen, nullptr, &log[0]);
-        std::cerr << "Program validation error: " << log << "\n";
-        return false;
-    }
+    // // 可选：验证，这里验证必须有一个 VAO 绑定，否则状态不完整，目前先注释掉
+    // // 在 OpenGL Core Profile（3.3 及以上核心模式）中，任何与顶点属性相关的绘制操作都必须在绑定一个 VAO（Vertex Array Object）的前提下进行，
+    // // 即使你不打算使用属性或只绘制全屏四边形，也必须有一个 VAO 绑定，否则状态是不完整的。
+    // glValidateProgram(programID);
+    // GLint valStatus;
+    // glGetProgramiv(programID, GL_VALIDATE_STATUS, &valStatus);
+    // if (valStatus != GL_TRUE) {
+    //     GLint logLen;
+    //     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &logLen);
+    //     std::string log(logLen, ' ');
+    //     glGetProgramInfoLog(programID, logLen, nullptr, &log[0]);
+    //     std::cerr << "Program validation error: " << log << "\n";
+    //     return false;
+    // }
     return true;
 }
