@@ -3,7 +3,7 @@
 #include "Device.h"
 #include "OpenGLCommandBuffer.h"
 #include "CommandQueue.h"
-#include "IGLResource.h"
+#include "IRenderResource.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <thread>
@@ -19,7 +19,7 @@ public:
     ~OpenGLDevice() override;
 
     // 注册一个需要在渲染线程中创建 GL 资源的对象
-    void registerResource(IGLResource* res) {
+    void registerResource(IRenderResource* res) override {
         _resources.push_back(res);
     }
 
@@ -30,7 +30,7 @@ public:
 private:
     void renderThreadMain();
 
-    std::vector<IGLResource*> _resources;
+    std::vector<IRenderResource*> _resources;
 
     GLFWwindow* _window = nullptr;
     std::thread _renderThread;

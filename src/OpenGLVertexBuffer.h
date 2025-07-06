@@ -1,10 +1,10 @@
 #pragma once
 #include "VertexBuffer.h"
-#include "IGLResource.h"
+#include "IRenderResource.h"
 #include <glad/glad.h>
 #include <vector>
 
-class OpenGLVertexBuffer : public IVertexBuffer, public IGLResource {
+class OpenGLVertexBuffer : public IVertexBuffer, public IRenderResource {
 public:
     /// data: 顶点数据指针，size: 字节大小
     OpenGLVertexBuffer(const void* data, unsigned int size);

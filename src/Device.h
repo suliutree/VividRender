@@ -1,5 +1,6 @@
 #pragma once
 #include "CommandBuffer.h"
+#include "IRenderResource.h"
 
 class IDevice {
 public:
@@ -15,4 +16,7 @@ public:
     
     /// 请求关闭渲染器
     virtual void shutdown() = 0;
+
+    /// 注册一个需要在渲染线程中创建 GL/GLSL/metal/VK 资源的对象
+    virtual void registerResource(IRenderResource* res) = 0;
 };

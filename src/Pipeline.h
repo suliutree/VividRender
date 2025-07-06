@@ -2,10 +2,10 @@
 
 #include <string>
 #include <glad/glad.h>
-#include "IGLResource.h"
+#include "IRenderResource.h"
 
 /// 封装一个简单的 Pipeline State Object（PSO）
-class PipelineState : public IGLResource {
+class PipelineState : public IRenderResource {
 public:
     /// 构造：传入顶点/片段着色器文件路径
     PipelineState(const std::string& vertPath, const std::string& fragPath);
