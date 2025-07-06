@@ -34,11 +34,38 @@ void PipelineState::initializeGL() {
         programID = 0;
     }
 
+    GLint uniformCount = 0;
+    glGetProgramiv(programID, GL_ACTIVE_UNIFORMS, &uniformCount);
+
+    char nameBuf[256];
+    for (GLint i = 0; i < uniformCount; ++i) {
+        GLsizei length = 0;
+        GLint size = 0;
+        GLenum type = 0;
+        glGetActiveUniform(programID, i, sizeof(nameBuf), &length, &size, &type, nameBuf);
+        std::string name(nameBuf, length);
+        GLint loc = glGetUniformLocation(programID, name.c_str());
+        _uniformLocation[name] = loc;
+    }
+
     // 4. 着色器对象不再需要
     glDetachShader(programID, vert);
     glDetachShader(programID, frag);
     glDeleteShader(vert);
     glDeleteShader(frag);
+}
+
+GLint PipelineState::getUniformLocation(const std::string& name)
+{
+    auto it = _uniformLocation.find(name);
+    if (it != _uniformLocation.end()) {
+        return it->second;
+    }
+
+    // 这里使用 gl 函数是否合理
+    GLint loc = glGetUniformLocation(programID, name.c_str());
+    _uniformLocation[name] = loc;
+    return loc;
 }
 
 bool PipelineState::linkAndValidate(GLuint vertShader, GLuint fragShader) {

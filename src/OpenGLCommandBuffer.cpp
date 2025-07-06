@@ -35,6 +35,19 @@ void OpenGLCommandBuffer::bindVertexArray(GLuint VAO) {
     });
 }
 
+void OpenGLCommandBuffer::bindTexture(GLenum unit, GLuint textureID) {
+    _commands.emplace_back([unit, textureID]() {
+        glActiveTexture(unit);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+    });
+}
+
+void OpenGLCommandBuffer::setUniform1i(GLint location, GLint value) {
+    _commands.emplace_back([location, value]() {
+        glUniform1i(location, value);
+    });
+}
+
 void OpenGLCommandBuffer::executeAll() {
 
     // 遍历并执行所有录制的命令

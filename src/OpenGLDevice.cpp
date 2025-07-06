@@ -26,6 +26,23 @@ void OpenGLDevice::shutdown() {
     }
 }
 
+void OpenGLDevice::registerResource(IRenderResource* res) {
+    std::lock_guard<std::mutex> lk(_resourceMutex);
+    _pendingResources.push_back(res);
+}
+
+void OpenGLDevice::processPendingResources() {
+    std::vector<IRenderResource*> newly;
+    {
+        std::lock_guard<std::mutex> lk(_resourceMutex);
+        newly.swap(_pendingResources);
+    }
+    for (auto* res : newly) {
+        res->initializeGL();
+        _resources.push_back(res);
+    }
+}
+
 ICommandBuffer* OpenGLDevice::beginFrame() {
     // 只在初始化时为 false，在渲染线程首次插入 fence 后设为 true，之后保持 true，用来区分“第一次”和“之后每次”都要等待 fence 的逻辑
     if (hasSubmitted[_currentFrame]) {
@@ -77,13 +94,14 @@ void OpenGLDevice::renderThreadMain() {
     glClearColor(0.05f, 0.05f, 0.2f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
-
-    // 在渲染线程中，遍历所有注册资源，调用 initializeGL()
-    for (auto* res : _resources) {
-        res->initializeGL();
-    }
+    // 第一次把在主线程启动前就注册的资源初始化
+    processPendingResources();
     
     while (_isRunning.load()) {
+
+        // 每帧都先处理最新注册的资源
+        processPendingResources();
+
         ICommandBuffer* cmd;
         if (_commandQueue.wait_and_pop(cmd)) {
 

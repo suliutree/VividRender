@@ -16,6 +16,9 @@ public:
     void unbindPipeline() override;
     void bindVertexArray(GLuint VAO) override;
 
+    void bindTexture(GLenum unit, GLuint textureID) override;
+    void setUniform1i(GLint location, GLint value) override;
+
     // --- 供渲染线程调用的新接口 ---
     /// 执行所有已录制的命令
     void executeAll();

@@ -12,4 +12,7 @@ public:
     virtual void bindPipeline(GLuint programID) = 0;
     virtual void unbindPipeline() = 0;
     virtual void bindVertexArray(GLuint VAO) = 0;
+
+    virtual void bindTexture(GLenum unit, GLuint textureID) = 0;
+    virtual void setUniform1i(GLint location, GLint value) = 0;
 };

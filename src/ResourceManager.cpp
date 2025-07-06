@@ -4,6 +4,8 @@
 #include "OpenGLVertexBuffer.h"
 #include "Texture2D.h"  // 你的纹理类
 
+#include <iostream>
+
 #include <functional>
 // #include <xxhash.h>     // 如果需要高效哈希，可用 XXHash 等
 

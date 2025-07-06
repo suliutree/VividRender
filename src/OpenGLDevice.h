@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <atomic>
+#include <iostream>
 
 // 使用双缓冲来允许 CPU 和 GPU 并行工作
 constexpr int NUM_FRAMES_IN_FLIGHT = 2;
@@ -19,9 +20,9 @@ public:
     ~OpenGLDevice() override;
 
     // 注册一个需要在渲染线程中创建 GL 资源的对象
-    void registerResource(IRenderResource* res) override {
-        _resources.push_back(res);
-    }
+    void registerResource(IRenderResource* res) override;
+
+    void processPendingResources();
 
     ICommandBuffer* beginFrame() override;
     void endFrame(ICommandBuffer* cmd) override;
@@ -30,7 +31,11 @@ public:
 private:
     void renderThreadMain();
 
+    std::mutex _resourceMutex;
+    // 已经初始化过、可直接用于渲染的资源列表
     std::vector<IRenderResource*> _resources;
+    // 刚注册进来的、还没初始化的资源列表
+    std::vector<IRenderResource*> _pendingResources;
 
     GLFWwindow* _window = nullptr;
     std::thread _renderThread;

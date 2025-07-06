@@ -50,6 +50,7 @@ add_executable(VividRender
   src/RenderGraph.cpp
   src/ClearPass.cpp
   src/TrianglePass.cpp
+  src/TexturedTrianglePass.cpp
   src/OpenGLVertexBuffer.cpp
   src/Shader.cpp
   src/Texture2D.cpp

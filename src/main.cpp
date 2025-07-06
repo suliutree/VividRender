@@ -8,6 +8,7 @@
 #include "RenderGraph.h"
 #include "ClearPass.h"
 #include "TrianglePass.h"
+#include "TexturedTrianglePass.h"
 
 int main() {
     // --- GLFW 初始化略 ---
@@ -39,11 +40,11 @@ int main() {
     }
     std::cout << "GLAD Initialized on Loader Thread.\n";
 
-    // 顶点数据：pos + color  
+    // 顶点数据：pos + color + tex 
     float vertices[] = {
-         0.0f,  0.5f,  1.0f,0.0f,0.0f,
-         0.5f, -0.5f,  0.0f,1.0f,0.0f,
-        -0.5f, -0.5f,  0.0f,0.0f,1.0f
+         0.0f,  0.5f,  1.0f,0.0f,0.0f,  0.5f,1.0f,
+         0.5f, -0.5f,  0.0f,1.0f,0.0f,  1.0f,0.0f,
+        -0.5f, -0.5f,  0.0f,0.0f,1.0f,  0.0f,0.0f
     };
 
     // --- 创建 Device & ResourceManager ---
@@ -52,14 +53,16 @@ int main() {
     ResourceManager resMgr(&device);              // 统一的资源管理
 
     // --- 通过 ResourceManager 加载并缓存管线／顶点缓冲 ---
-    auto pipeline    = resMgr.loadPipeline("shaders/simple.vert", "shaders/simple.frag");
+    auto pipeline    = resMgr.loadPipeline("../shaders/simple.vert", "../shaders/simple.frag");
     auto triangleVB  = resMgr.loadVertexBuffer(vertices, sizeof(vertices));
+    auto texture     = resMgr.loadTexture("../textures/line.png");
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;
 
     // --- 构建 RenderGraph 中的 Pass ---
     auto clearPass    = std::make_shared<ClearPass>();
-    auto trianglePass = std::make_shared<TrianglePass>(pipeline.get(), triangleVB.get());
+    // auto trianglePass = std::make_shared<TrianglePass>(pipeline.get(), triangleVB.get());
+    auto texturedTrianglePass = std::make_shared<TexturedTrianglePass>(pipeline, triangleVB, texture);
 
     // --- 主循环 ---
     while (!glfwWindowShouldClose(renderWindow)) {
@@ -67,7 +70,7 @@ int main() {
 
         RenderGraph graph;
         graph.addPass(clearPass, {}, { RenderResource::ClearedRenderTarget });
-        graph.addPass(trianglePass, { RenderResource::ClearedRenderTarget }, { RenderResource::FinalFrame });
+        graph.addPass(texturedTrianglePass, { RenderResource::ClearedRenderTarget }, { RenderResource::FinalFrame });
 
         // 录制 & 提交
         ICommandBuffer* cmd = device.beginFrame();

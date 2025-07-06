@@ -11,7 +11,8 @@ TrianglePass::TrianglePass(PipelineState* p, IVertexBuffer* v)
 {}
 
 const std::string& TrianglePass::getName() const {
-    return name;
+    static std::string n = "TrianglePass";
+    return n;
 }
 
 void TrianglePass::execute(IDevice* device, ICommandBuffer* cmd) {

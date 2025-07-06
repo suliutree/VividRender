@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <glad/glad.h>
 #include "IRenderResource.h"
 
@@ -15,10 +16,13 @@ public:
 
     GLuint getProgramID() const { return programID; }
 
+    GLint getUniformLocation(const std::string& name);
+
 private:
     std::string _vsPath, _fsPath;
-
     GLuint programID = 0;
+    std::unordered_map<std::string, GLint> _uniformLocation;
+
     /// 辅助：链接 Program 并检查错误
     bool linkAndValidate(GLuint vertShader, GLuint fragShader);
 };
