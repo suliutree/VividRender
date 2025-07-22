@@ -1,5 +1,6 @@
 #pragma once
 #include "RenderPass.h"
+#include <memory>
 class PipelineState;
 class IVertexBuffer;
 class Texture2D;
