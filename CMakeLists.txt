@@ -68,6 +68,8 @@ target_include_directories(VividRender
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/third_party/stb
+    ${CMAKE_SOURCE_DIR}/third_party/
+    ${CMAKE_SOURCE_DIR}/third_party/glm
 )
 
 # —— 资源拷贝 —— 

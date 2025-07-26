@@ -9,6 +9,33 @@
 #include "ClearPass.h"
 #include "TrianglePass.h"
 #include "TexturedTrianglePass.h"
+#include "Camera.h"
+#include <glm/glm.hpp>
+
+const int WindowWidth = 800;
+const int WindowHeight = 600;
+
+struct InputState {
+    bool firstMouse = true;
+    double lastX = WindowWidth * 0.5;  // 窗口中心
+    double lastY = WindowHeight * 0.5;
+    Camera* camera = nullptr;
+};
+
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    InputState* st = (InputState*)glfwGetWindowUserPointer(window);
+    if (st->firstMouse) {
+        st->lastX = xpos;
+        st->lastY = ypos;
+        st->firstMouse = false;
+    }
+    float xoffset = (float)(xpos - st->lastX);
+    float yoffset = (float)(st->lastY - ypos); // y 反过来
+    st->lastX = xpos;
+    st->lastY = ypos;
+
+    st->camera->processMouse(xoffset, yoffset);
+}
 
 int main() {
     // --- GLFW 初始化略 ---
@@ -23,12 +50,14 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
    #endif
 
-    GLFWwindow* renderWindow = glfwCreateWindow(800, 600, "VividRender", nullptr, nullptr);
+    GLFWwindow* renderWindow = glfwCreateWindow(WindowWidth, WindowHeight, "VividRender", nullptr, nullptr);
     if (!renderWindow) {
         std::cerr << "Failed to create render window\n";
         glfwTerminate();
         return -1;
     }
+
+    glfwSetInputMode(renderWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // 隐藏窗口 + 共享 Context 初始化 GLAD
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -42,9 +71,9 @@ int main() {
 
     // 顶点数据：pos + color + tex 
     float vertices[] = {
-         0.0f,  0.5f,  1.0f,0.0f,0.0f,  0.5f,1.0f,
-         0.5f, -0.5f,  0.0f,1.0f,0.0f,  1.0f,0.0f,
-        -0.5f, -0.5f,  0.0f,0.0f,1.0f,  0.0f,0.0f
+         0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  0.5f, 1.0f,
+         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f
     };
 
     // --- 创建 Device & ResourceManager ---
@@ -59,14 +88,50 @@ int main() {
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;
 
+
+    // --- 摄像机 & 输入状态 ---
+    Camera camera(glm::vec3(0, 0, 3));
+    InputState input;
+    input.camera = &camera;
+    glfwSetWindowUserPointer(renderWindow, &input);
+    glfwSetCursorPosCallback(renderWindow, mouse_callback);
+
+    int w = WindowWidth, h = WindowHeight;
+    glfwGetFramebufferSize(renderWindow, &w, &h);
+    float aspect = (float)w / (float)h;
+
     // --- 构建 RenderGraph 中的 Pass ---
     auto clearPass    = std::make_shared<ClearPass>();
     // auto trianglePass = std::make_shared<TrianglePass>(pipeline.get(), triangleVB.get());
-    auto texturedTrianglePass = std::make_shared<TexturedTrianglePass>(pipeline, triangleVB, texture);
+    auto texturedTrianglePass = std::make_shared<TexturedTrianglePass>(pipeline, triangleVB, texture, &camera, &aspect);
+
+    double lastTime = glfwGetTime();
 
     // --- 主循环 ---
     while (!glfwWindowShouldClose(renderWindow)) {
         glfwPollEvents();
+
+         if (glfwGetKey(renderWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(renderWindow, GLFW_TRUE);
+        }
+
+        double now = glfwGetTime();
+        float deltaTime = float(now - lastTime);
+        lastTime = now;
+
+        // --- 键盘控制摄像机 ---
+        if (glfwGetKey(renderWindow, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Forward,  deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Backward, deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Left,     deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_D) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Right,    deltaTime);
+
+        // 处理窗口大小变化
+        int nw, nh;
+        glfwGetFramebufferSize(renderWindow, &nw, &nh);
+        if (nw != w || nh != h) {
+            w = nw; h = nh;
+            aspect = (float)w / (float)h;
+        }
 
         RenderGraph graph;
         graph.addPass(clearPass, {}, { RenderResource::ClearedRenderTarget });

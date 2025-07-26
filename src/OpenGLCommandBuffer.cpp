@@ -1,5 +1,6 @@
 #include "OpenGLCommandBuffer.h"
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp> 
 
 void OpenGLCommandBuffer::clear() {
     // std::cout << "check clear" << std::endl;
@@ -45,6 +46,19 @@ void OpenGLCommandBuffer::bindTexture(GLenum unit, GLuint textureID) {
 void OpenGLCommandBuffer::setUniform1i(GLint location, GLint value) {
     _commands.emplace_back([location, value]() {
         glUniform1i(location, value);
+    });
+}
+
+void OpenGLCommandBuffer::setUniformMat4(GLint location, const float* value) {
+    glm::mat4 mat = glm::make_mat4(value);
+    _commands.emplace_back([location, mat]() {
+        glUniformMatrix4fv(location, 1, GL_FALSE, &mat[0][0]);
+    });
+}
+
+void OpenGLCommandBuffer::setUniform3f(GLint location, float x, float y, float z) {
+    _commands.emplace_back([location, x, y, z]() {
+        glUniform3f(location, x, y, z);
     });
 }
 
