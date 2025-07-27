@@ -43,9 +43,7 @@ target_include_directories(glad
 )
 
 # —— 主可执行文件 —— 
-add_executable(VividRender
-  src/main.cpp
-
+add_library(vivid_core
   # 渲染框架各模块
   src/RenderGraph.cpp
   src/ClearPass.cpp
@@ -60,32 +58,36 @@ add_executable(VividRender
   src/ResourceManager.cpp
 )
 
-# —— 头文件搜索 —— 
-# 只为 VividRender 添加两个私有 include 路径：
-# 1. 项目源码头文件
-# 2. stb_image.h 所在目录
-target_include_directories(VividRender
-  PRIVATE
+target_include_directories(vivid_core
+  PUBLIC
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/third_party/stb
     ${CMAKE_SOURCE_DIR}/third_party/
+    ${CMAKE_SOURCE_DIR}/third_party/stb
     ${CMAKE_SOURCE_DIR}/third_party/glm
 )
 
-# —— 资源拷贝 —— 
-# 编译后把 shaders 目录一起拷到可执行文件旁
-add_custom_command(TARGET VividRender POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/shaders
-    $<TARGET_FILE_DIR:VividRender>/shaders
-)
-
 # —— 链接依赖 —— 
-target_link_libraries(VividRender
-  PRIVATE
+target_link_libraries(vivid_core
+  PUBLIC
     glfw
     glad
     ${OPENGL_LIBRARIES}
     dl
     Threads::Threads
 )
+
+
+function(copy_runtime_assets TARGET_NAME)
+    # 编译后把 shaders 目录一起拷到可执行文件旁
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/shaders
+            $<TARGET_FILE_DIR:${TARGET_NAME}>/shaders
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_SOURCE_DIR}/textures
+                $<TARGET_FILE_DIR:${TARGET_NAME}>/textures
+    )
+endfunction()
+
+# 假设每个 sample 子目录都有自己的 CMakeLists
+add_subdirectory(samples)

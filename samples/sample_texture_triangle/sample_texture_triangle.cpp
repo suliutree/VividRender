@@ -82,9 +82,9 @@ int main() {
     ResourceManager resMgr(&device);              // 统一的资源管理
 
     // --- 通过 ResourceManager 加载并缓存管线／顶点缓冲 ---
-    auto pipeline    = resMgr.loadPipeline("../shaders/simple.vert", "../shaders/simple.frag");
+    auto pipeline    = resMgr.loadPipeline("./shaders/simple.vert", "./shaders/simple.frag");
     auto triangleVB  = resMgr.loadVertexBuffer(vertices, sizeof(vertices));
-    auto texture     = resMgr.loadTexture("../textures/line.png");
+    auto texture     = resMgr.loadTexture("./textures/line.png");
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;
 
