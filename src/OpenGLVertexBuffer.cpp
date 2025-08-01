@@ -17,10 +17,13 @@ void OpenGLVertexBuffer::initializeGL(){
     glBufferData(GL_ARRAY_BUFFER, _size, _cpuData.data(), GL_STATIC_DRAW);
 
     constexpr GLsizei stride = 8 * sizeof(float);
+    // location 0: position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    // location 1: normal / color
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+    // location 2: tex-coord
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
 

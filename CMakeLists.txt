@@ -49,9 +49,12 @@ add_library(vivid_core
   src/ClearPass.cpp
   src/TrianglePass.cpp
   src/TexturedTrianglePass.cpp
+  src/ModelPass.cpp
   src/OpenGLVertexBuffer.cpp
+  src/OpenGLIndexBuffer.cpp
   src/Shader.cpp
   src/Texture2D.cpp
+  src/Model.cpp
   src/Pipeline.cpp
   src/OpenGLCommandBuffer.cpp
   src/OpenGLDevice.cpp
@@ -66,6 +69,24 @@ target_include_directories(vivid_core
     ${CMAKE_SOURCE_DIR}/third_party/glm
 )
 
+# —— 直接编译第三方 Assimp ——
+# 所有选项设为 CACHE BOOL "" FORCE，避免父 CMake 多次 include 时重复定义
+set(ASSIMP_BUILD_TESTS            OFF CACHE BOOL "" FORCE)  # 禁用测试
+set(ASSIMP_BUILD_ASSIMP_TOOLS     OFF CACHE BOOL "" FORCE)  # 不编译 assimp 命令行
+set(ASSIMP_BUILD_SAMPLES          OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL                OFF CACHE BOOL "" FORCE)  # 不生成 install 规则
+set(ASSIMP_NO_EXPORT              ON  CACHE BOOL "" FORCE)  # 不再生成 export 目标
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER     ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER    OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_FBX_IMPORTER     ON  CACHE BOOL "" FORCE)
+
+# 让静态库默认带 -fPIC，才能与共享 OpenGL lib 等共存（macOS / Linux 必要）
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_subdirectory(third_party/assimp)   # 生成 static lib: assimp
+
+
 # —— 链接依赖 —— 
 target_link_libraries(vivid_core
   PUBLIC
@@ -74,6 +95,7 @@ target_link_libraries(vivid_core
     ${OPENGL_LIBRARIES}
     dl
     Threads::Threads
+    assimp
 )
 
 
@@ -86,6 +108,9 @@ function(copy_runtime_assets TARGET_NAME)
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_SOURCE_DIR}/textures
                 $<TARGET_FILE_DIR:${TARGET_NAME}>/textures
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_SOURCE_DIR}/assets
+                $<TARGET_FILE_DIR:${TARGET_NAME}>/assets
     )
 endfunction()
 

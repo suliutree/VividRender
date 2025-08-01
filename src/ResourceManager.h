@@ -9,6 +9,7 @@ class IDevice;
 class PipelineState;
 class IVertexBuffer;
 class Texture2D;
+class Model;
 
 class ResourceManager {
 public:
@@ -27,6 +28,8 @@ public:
 
     std::shared_ptr<Texture2D> loadTexture(const std::string& imagePath);
 
+    std::shared_ptr<Model> loadModel(const std::string& path);
+
 private:
     IDevice* _device;  // 用于注册资源到渲染线程
     std::mutex _mutex; // 保护下面的多个 cache
@@ -38,4 +41,6 @@ private:
 
     // Key 为图片路径
     std::unordered_map<std::string, std::weak_ptr<Texture2D>> _textureCache; 
+
+    std::unordered_map<std::string, std::weak_ptr<Model>> _modelCache;
 };

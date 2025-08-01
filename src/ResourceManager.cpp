@@ -2,7 +2,8 @@
 #include "Device.h"
 #include "Pipeline.h"
 #include "OpenGLVertexBuffer.h"
-#include "Texture2D.h"  // 你的纹理类
+#include "Texture2D.h"
+#include "Model.h"
 
 #include <iostream>
 
@@ -77,4 +78,27 @@ std::shared_ptr<Texture2D> ResourceManager::loadTexture(const std::string& image
     _device->registerResource(tex.get());
     _textureCache[imagePath] = tex;
     return tex;
+}
+
+std::shared_ptr<Model> ResourceManager::loadModel(const std::string& path)
+{
+    std::lock_guard<std::mutex> lk(_mutex);
+
+    // 1. 查询缓存
+    auto it = _modelCache.find(path);
+    if (it != _modelCache.end()) {
+        if (auto existing = it->second.lock()) {
+            return existing;                    // 命中直接返回
+        }
+    }
+
+    // 2. 未命中 → 创建新 Model（只解析文件，不做任何 GL 调用）
+    auto model = std::make_shared<Model>(path);
+
+    // 3. 交由渲染线程在正确的 Context 内完成 initializeGL()
+    _device->registerResource(model.get());
+
+    // 4. 写入缓存 & 返回
+    _modelCache[path] = model;
+    return model;
 }

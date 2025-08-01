@@ -15,6 +15,7 @@ PipelineState::~PipelineState() {
 }
 
 void PipelineState::initializeGL() {
+
     // 1. 编译顶点/片段着色器
     GLuint vert = Shader::compileFromFile(_vsPath, GL_VERTEX_SHADER);
     GLuint frag = Shader::compileFromFile(_fsPath, GL_FRAGMENT_SHADER);
@@ -30,8 +31,11 @@ void PipelineState::initializeGL() {
 
     // 3. 链接与校验
     if (!linkAndValidate(vert, frag)) {
+        std::cerr << "[Pipeline] Link FAILED, vert=" << _vsPath
+                << " frag=" << _fsPath << std::endl;
         glDeleteProgram(programID);
         programID = 0;
+        return;
     }
 
     GLint uniformCount = 0;
