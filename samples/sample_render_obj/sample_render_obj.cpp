@@ -74,7 +74,7 @@ int main() {
     ResourceManager resMgr(&device);              // 统一的资源管理
 
     auto phong      = resMgr.loadPipeline("../../../shaders/phong.vert", "../../../shaders/phong.frag");
-    auto model      = resMgr.loadModel("../../../assets/head.obj");
+    auto model      = resMgr.loadModel("../../../assets/foot.obj");
     auto tex        = resMgr.loadTexture("../../../textures/line.png");
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;

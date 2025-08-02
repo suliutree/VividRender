@@ -108,9 +108,9 @@ function(copy_runtime_assets TARGET_NAME)
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_SOURCE_DIR}/textures
                 $<TARGET_FILE_DIR:${TARGET_NAME}>/textures
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_SOURCE_DIR}/assets
-                $<TARGET_FILE_DIR:${TARGET_NAME}>/assets
+        # COMMAND ${CMAKE_COMMAND} -E copy_directory
+        #         ${CMAKE_SOURCE_DIR}/assets
+        #         $<TARGET_FILE_DIR:${TARGET_NAME}>/assets
     )
 endfunction()
 
