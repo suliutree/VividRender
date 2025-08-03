@@ -9,6 +9,7 @@
 #include "ClearPass.h"
 #include "ModelPass.h"
 #include "Camera.h"
+#include "Model.h"
 #include <glm/glm.hpp>
 
 const int WindowWidth = 800;
@@ -34,6 +35,11 @@ static void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     st->lastY = ypos;
 
     st->camera->processMouse(xoffset, yoffset);
+}
+
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    InputState* st = (InputState*)glfwGetWindowUserPointer(window);
+    st->camera->processScroll((float)yoffset);
 }
 
 int main() {
@@ -81,11 +87,20 @@ int main() {
 
 
     // --- 摄像机 & 输入状态 ---
-    Camera camera(glm::vec3(0, 1.0f, 3.5f));
+    // *** 主要修改点 1: 初始化相机 ***
+    // 假设模型的中心点在 (0, 0.5f, 0)。
+    // Get the calculated center directly from the loaded model
+    glm::vec3 modelCenter = model->getCenter();
+    // 使用新的构造函数，传入焦点和初始距离
+    Camera camera(modelCenter, 0.2f);
+
     InputState input;
     input.camera = &camera;
     glfwSetWindowUserPointer(renderWindow, &input);
     glfwSetCursorPosCallback(renderWindow, mouse_callback);
+    // *** 新增：需要为滚轮设置回调 ***
+    glfwSetScrollCallback(renderWindow, scroll_callback); // 需要添加 scroll_callback 函数
+
 
     int w = WindowWidth, h = WindowHeight;
     glfwGetFramebufferSize(renderWindow, &w, &h);
@@ -109,11 +124,17 @@ int main() {
         float deltaTime = float(now - lastTime);
         lastTime = now;
 
-        // --- 键盘控制摄像机 ---
-        if (glfwGetKey(renderWindow, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Forward,  deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Backward, deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Left,     deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_D) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Right,    deltaTime);
+        // --- 键盘控制摄像机 (现在是平移) ---
+        // *** 主要修改点 2: 键盘映射 ***
+        // 注意枚举值的变化
+        if (glfwGetKey(renderWindow, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Up,    deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Down,  deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Left,  deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_D) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Right, deltaTime);
+
+        // *** 主要修改点 3: 调用 camera.update() ***
+        // 在处理完所有输入后，调用 update() 来计算相机最终的位置和朝向
+        camera.update();
 
         // 处理窗口大小变化
         int nw, nh;

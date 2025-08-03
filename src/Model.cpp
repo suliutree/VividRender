@@ -20,6 +20,30 @@ void Model::initializeGL() {
     if (!scene || !scene->HasMeshes())
         throw std::runtime_error("Assimp load failed: " + _path);
 
+    glm::vec3 minBounds(std::numeric_limits<float>::max());
+    glm::vec3 maxBounds(std::numeric_limits<float>::lowest());
+
+    for (unsigned int m = 0; m < scene->mNumMeshes; ++m) {
+        const aiMesh* mesh = scene->mMeshes[m];
+        for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
+            const aiVector3D& vert = mesh->mVertices[i];
+            minBounds.x = std::min(minBounds.x, vert.x);
+            minBounds.y = std::min(minBounds.y, vert.y);
+            minBounds.z = std::min(minBounds.z, vert.z);
+
+            maxBounds.x = std::max(maxBounds.x, vert.x);
+            maxBounds.y = std::max(maxBounds.y, vert.y);
+            maxBounds.z = std::max(maxBounds.z, vert.z);
+        }
+    }
+    // Calculate the center of the AABB
+    _center = (minBounds + maxBounds) * 0.5f;
+
+    std::cout << "Model loaded: " << _path << std::endl;
+    std::cout << " - Calculated Center: (" << _center.x << ", " << _center.y << ", " << _center.z << ")" << std::endl;
+    std::cout << " - Number of meshes: " << scene->mNumMeshes << std::endl;
+
+
     std::cout << "number meshes: " << scene->mNumMeshes << std::endl;
 
     _meshes.reserve(scene->mNumMeshes);

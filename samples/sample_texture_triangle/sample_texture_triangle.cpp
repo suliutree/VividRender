@@ -90,7 +90,13 @@ int main() {
 
 
     // --- 摄像机 & 输入状态 ---
-    Camera camera(glm::vec3(0, 0, 3));
+    // *** 主要修改点 1: 初始化相机 ***
+    // 假设模型的中心点在 (0, 0.5f, 0)。
+    // 在实际应用中，这个值应该从模型加载器中获取（例如计算模型的包围盒中心）。
+    glm::vec3 modelCenter = glm::vec3(0.0f, 0.5f, 0.0f);
+    // 使用新的构造函数，传入焦点和初始距离
+    Camera camera(modelCenter, 3.5f);
+
     InputState input;
     input.camera = &camera;
     glfwSetWindowUserPointer(renderWindow, &input);
@@ -119,11 +125,17 @@ int main() {
         float deltaTime = float(now - lastTime);
         lastTime = now;
 
-        // --- 键盘控制摄像机 ---
-        if (glfwGetKey(renderWindow, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Forward,  deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Backward, deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Left,     deltaTime);
-        if (glfwGetKey(renderWindow, GLFW_KEY_D) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Right,    deltaTime);
+        // --- 键盘控制摄像机 (现在是平移) ---
+        // *** 主要修改点 2: 键盘映射 ***
+        // 注意枚举值的变化
+        if (glfwGetKey(renderWindow, GLFW_KEY_W) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Up,    deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_S) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Down,  deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_A) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Left,  deltaTime);
+        if (glfwGetKey(renderWindow, GLFW_KEY_D) == GLFW_PRESS) camera.processKeyboard(Camera_Movement::Right, deltaTime);
+
+        // *** 主要修改点 3: 调用 camera.update() ***
+        // 在处理完所有输入后，调用 update() 来计算相机最终的位置和朝向
+        camera.update();
 
         // 处理窗口大小变化
         int nw, nh;

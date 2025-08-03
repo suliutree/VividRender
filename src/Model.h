@@ -28,9 +28,13 @@ public:
     };
     const std::vector<SubMesh>& getSubMeshes() const { return _meshes; }
 
+    glm::vec3 getCenter() const { return _center; }
+
 private:
     std::string _path;
     std::vector<Vertex>   _verticesCPU;   // 临时缓冲
     std::vector<uint32_t> _indicesCPU;
     std::vector<SubMesh>  _meshes;        // GPU 资源
+
+    glm::vec3 _center;
 };
