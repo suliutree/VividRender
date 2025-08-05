@@ -80,7 +80,6 @@ int main() {
     ResourceManager resMgr(&device);              // 统一的资源管理
 
     auto phong      = resMgr.loadPipeline("../../../shaders/phong.vert", "../../../shaders/phong.frag");
-    // auto model      = resMgr.loadModel("../../../assets/foot.obj");
     auto model      = resMgr.loadModel("../../../third_party/assimp/test/models/OBJ/spider.obj");
     auto tex        = resMgr.loadTexture("../../../textures/line.png");
 
