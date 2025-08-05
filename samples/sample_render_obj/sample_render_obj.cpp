@@ -80,7 +80,8 @@ int main() {
     ResourceManager resMgr(&device);              // 统一的资源管理
 
     auto phong      = resMgr.loadPipeline("../../../shaders/phong.vert", "../../../shaders/phong.frag");
-    auto model      = resMgr.loadModel("../../../assets/foot.obj");
+    // auto model      = resMgr.loadModel("../../../assets/foot.obj");
+    auto model      = resMgr.loadModel("../../../third_party/assimp/test/models/OBJ/spider.obj");
     auto tex        = resMgr.loadTexture("../../../textures/line.png");
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;
@@ -92,7 +93,7 @@ int main() {
     // Get the calculated center directly from the loaded model
     glm::vec3 modelCenter = model->getCenter();
     // 使用新的构造函数，传入焦点和初始距离
-    Camera camera(modelCenter, 0.2f);
+    Camera camera(modelCenter, 50.f);
 
     InputState input;
     input.camera = &camera;
