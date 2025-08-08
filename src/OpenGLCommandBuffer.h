@@ -1,8 +1,11 @@
 #pragma once
 #include <glad/glad.h>
 #include "CommandBuffer.h"
+#include <memory>
 #include <vector>
 #include <functional>
+
+class OpenGLIndexBuffer;
 
 class OpenGLCommandBuffer : public ICommandBuffer {
 public:
@@ -11,6 +14,8 @@ public:
 
     void clear() override;
     void draw(unsigned int vertexCount) override;
+
+    void drawIndexed(std::shared_ptr<OpenGLIndexBuffer> ib, unsigned int indexCount) override;
 
     void bindPipeline(GLuint programID) override;
     void unbindPipeline() override;
@@ -29,13 +34,10 @@ public:
     /// 清空录制的命令列表，为下一帧做准备
     void reset();
 
-    void setFrameIndex(int idx) {
-        _frameIndex = idx;
-    }
-    int getFrameIndex() const { return _frameIndex; }
-
-    int _frameIndex = -1;
+    void setFrameIndex(int idx);
+    int getFrameIndex() const;
 
 private:
+    int _frameIndex = -1;
     std::vector<std::function<void()>> _commands;
 };

@@ -2,12 +2,14 @@
 
 #include "IRenderResource.h"
 #include <string>
+#include <vector>
 #include <glad/glad.h>
 
 class Texture2D : public IRenderResource {
 public:
     /// 构造时只读取文件到 CPU 内存，不做任何 GL 的操作
     explicit Texture2D(const std::string& imagePath);
+    Texture2D(const std::string& identifier, const unsigned char* data, int len);
     ~Texture2D() override;
 
     void initializeGL() override;
@@ -22,7 +24,8 @@ private:
     int _h = 0;
     int _c = 0;
     
-    unsigned char* _data = nullptr;
+    unsigned char* _dataFromFile = nullptr;
+    // std::vector<unsigned char> _dataFromMemory;
 
     GLuint _texID = 0;
 };

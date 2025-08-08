@@ -80,6 +80,20 @@ std::shared_ptr<Texture2D> ResourceManager::loadTexture(const std::string& image
     return tex;
 }
 
+std::shared_ptr<Texture2D> ResourceManager::loadTextureFromMemory(const std::string& identifier, const unsigned char* data, int len)
+{
+    std::lock_guard<std::mutex> lk(_mutex);
+
+    if (_textureCache.count(identifier) && !_textureCache[identifier].expired()) {
+        return _textureCache[identifier].lock();
+    }
+
+    auto tex = std::make_shared<Texture2D>(identifier, data, len);
+    _device->registerResource(tex.get());
+    _textureCache[identifier] = tex;
+    return tex;
+}
+
 std::shared_ptr<Model> ResourceManager::loadModel(const std::string& path)
 {
     std::lock_guard<std::mutex> lk(_mutex);
@@ -93,7 +107,7 @@ std::shared_ptr<Model> ResourceManager::loadModel(const std::string& path)
     }
 
     // 2. 未命中 → 创建新 Model（只解析文件，不做任何 GL 调用）
-    auto model = std::make_shared<Model>(path);
+    auto model = std::make_shared<Model>(path, this);
 
     // 3. 交由渲染线程在正确的 Context 内完成 initializeGL()
     _device->registerResource(model.get());

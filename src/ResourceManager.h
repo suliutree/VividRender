@@ -27,6 +27,11 @@ public:
     );
 
     std::shared_ptr<Texture2D> loadTexture(const std::string& imagePath);
+    std::shared_ptr<Texture2D> loadTextureFromMemory(
+        const std::string& identifier,
+        const unsigned char* data,
+        int len
+    );
 
     std::shared_ptr<Model> loadModel(const std::string& path);
 

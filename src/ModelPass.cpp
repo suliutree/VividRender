@@ -16,47 +16,18 @@
 
 ModelPass::ModelPass(std::shared_ptr<PipelineState> p,
                      std::shared_ptr<Model> m,
-                     std::shared_ptr<Texture2D> tex,
                      Camera* cam, float* a)
-    : pipeline(std::move(p)), model(std::move(m)),
-      albedo(std::move(tex)), camera(cam), aspect(a) {
+    : pipeline(std::move(p))
+    , model(std::move(m))
+    , camera(cam)
+    , aspect(a)
+{
     name = "ModelPass";
 }
 
 const std::string& ModelPass::getName() const {
     return name;
 }
-
-// void ModelPass::execute(IDevice* device, ICommandBuffer* cmd) {
-//     cmd->bindPipeline(pipeline->getProgramID());
-
-//     // 常量
-//     glm::mat4 view = camera->getView();
-//     glm::mat4 proj = camera->getProj(*aspect);
-//     cmd->setUniformMat4(pipeline->getUniformLocation("uView"), &view[0][0]);
-//     cmd->setUniformMat4(pipeline->getUniformLocation("uProj"), &proj[0][0]);
-//     glm::vec3 lightDir = glm::normalize(glm::vec3(0.5, -1, 0.3));
-//     cmd->setUniform3f(pipeline->getUniformLocation("uLightDir"),
-//                       lightDir.x, lightDir.y, lightDir.z);
-//     cmd->setUniform3f(pipeline->getUniformLocation("uViewPos"),
-//                       camera->Position.x, camera->Position.y, camera->Position.z);
-
-//     albedo->bind(GL_TEXTURE0);
-//     cmd->setUniform1i(pipeline->getUniformLocation("uAlbedo"), 0);
-
-//     // 多 SubMesh
-//     for (const auto& sm : model->getSubMeshes()) {
-//         glm::mat4 modelM = glm::mat4(0.2f);       // 不做动画
-//         cmd->setUniformMat4(pipeline->getUniformLocation("uModel"),
-//                             &modelM[0][0]);
-
-//         cmd->bindVertexArray(static_cast<OpenGLVertexBuffer*>(sm.vb.get())->getVAO());
-//         static_cast<OpenGLIndexBuffer*>(sm.ib.get())->bind();
-//         cmd->draw(sm.indexCount);
-//     }
-
-//     cmd->unbindPipeline();
-// }
 
 
 void ModelPass::execute(IDevice* device, ICommandBuffer* cmd)
@@ -65,12 +36,19 @@ void ModelPass::execute(IDevice* device, ICommandBuffer* cmd)
 
     // std::cout << "program id: " << pipeline->getProgramID() << std::endl;
 
+    glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), -model->getCenter());
+    modelMat = glm::scale(modelMat, glm::vec3(0.1f));
+
     // ─────────────── 摄像机&投影 ───────────────
     glm::mat4 view = camera->getView();
     glm::mat4 proj = camera->getProj(*aspect);
+    // glm::mat4 projMat = glm::perspective(glm::radians(camera->getZoom()), *aspect, 0.1f, 1000.0f);
 
+
+    GLint locModel = pipeline->getUniformLocation("uModel");
     GLint locView = pipeline->getUniformLocation("uView");
     GLint locProj = pipeline->getUniformLocation("uProj");
+    cmd->setUniformMat4(locModel, &modelMat[0][0]);
     cmd->setUniformMat4(locView, &view[0][0]);
     cmd->setUniformMat4(locProj, &proj[0][0]);
 
@@ -89,38 +67,51 @@ void ModelPass::execute(IDevice* device, ICommandBuffer* cmd)
     // albedo->bind(GL_TEXTURE0); 直接这样调用是有问题的，相当于在非 OpenGL Contex 下调用了 GL 函数，一定要通过 Commond Buffer
 
     GLint locTex   = pipeline->getUniformLocation("uAlbedo");
-    cmd->bindTexture(GL_TEXTURE0, albedo->getID());
     cmd->setUniform1i(locTex, 0);
 
-    // // ─────────────── Draw 所有 SubMesh ───────────────
-    // if (model->getSubMeshes().empty()) {
-    //     std::cerr << "[ModelPass] WARNING: Model has no sub-meshes!\n";
+    // ─────────────── Draw 所有 SubMesh ───────────────
+
+    // for (std::size_t idx = 0; idx < model->getSubMeshes().size(); ++idx) {
+    //     const auto& sm = model->getSubMeshes()[idx];
+
+    //     if (sm.indexCount == 0) {
+    //         std::cerr << "[ModelPass] SubMesh #" << idx << " has 0 indices, skip\n";
+    //         continue;
+    //     }
+
+    //     glm::mat4 modelM(1.0f);          // 先统一 1，再按需 scale
+    //     modelM = glm::scale(modelM, glm::vec3(0.2f));
+
+    //     GLint locModel = pipeline->getUniformLocation("uModel");
+    //     cmd->setUniformMat4(locModel, &modelM[0][0]);
+
+    //     // 绑定 VAO & EBO
+    //     const GLuint vao = static_cast<OpenGLVertexBuffer*>(sm.vb.get())->getVAO();
+    //     if (vao == 0) {
+    //         std::cerr << "[ModelPass] SubMesh #" << idx << " VAO == 0 (uninit?)\n";
+    //         continue;
+    //     }
+    //     cmd->bindVertexArray(vao);
+    //     static_cast<OpenGLIndexBuffer*>(sm.ib.get())->bind();
+
+    //     cmd->draw(sm.indexCount);
     // }
 
-    for (std::size_t idx = 0; idx < model->getSubMeshes().size(); ++idx) {
-        const auto& sm = model->getSubMeshes()[idx];
+    for (const auto& submesh : model->getSubMeshes()) {
+        // 绑定该 SubMesh 的 VAO
+        auto gl_vb = std::static_pointer_cast<OpenGLVertexBuffer>(submesh.vb);
+        cmd->bindVertexArray(gl_vb->getVAO());
 
-        if (sm.indexCount == 0) {
-            std::cerr << "[ModelPass] SubMesh #" << idx << " has 0 indices, skip\n";
-            continue;
+        // 绑定该 SubMesh 的纹理
+        if (submesh.albedoTexture) {
+            cmd->bindTexture(GL_TEXTURE0, submesh.albedoTexture->getID());
+        } else {
+            // 可选：如果没纹理，绑定一个1x1的白色纹理
+            // cmd->bindTexture(GL_TEXTURE0, defaultWhiteTextureID);
         }
 
-        glm::mat4 modelM(1.0f);          // 先统一 1，再按需 scale
-        modelM = glm::scale(modelM, glm::vec3(0.2f));
-
-        GLint locModel = pipeline->getUniformLocation("uModel");
-        cmd->setUniformMat4(locModel, &modelM[0][0]);
-
-        // 绑定 VAO & EBO
-        const GLuint vao = static_cast<OpenGLVertexBuffer*>(sm.vb.get())->getVAO();
-        if (vao == 0) {
-            std::cerr << "[ModelPass] SubMesh #" << idx << " VAO == 0 (uninit?)\n";
-            continue;
-        }
-        cmd->bindVertexArray(vao);
-        static_cast<OpenGLIndexBuffer*>(sm.ib.get())->bind();
-
-        cmd->draw(sm.indexCount);
+        // 使用索引绘制
+        cmd->drawIndexed(submesh.ib, submesh.indexCount);
     }
 
     cmd->unbindPipeline();

@@ -1,4 +1,5 @@
 #include "OpenGLCommandBuffer.h"
+#include "OpenGLIndexBuffer.h"
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp> 
 
@@ -15,6 +16,17 @@ void OpenGLCommandBuffer::draw(unsigned int vertexCount) {
     // 录制 draw 命令，捕获顶点数量
     _commands.emplace_back([vertexCount]() {
         glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    });
+}
+
+void OpenGLCommandBuffer::drawIndexed(std::shared_ptr<OpenGLIndexBuffer> ib, unsigned int indexCount) {
+    _commands.emplace_back([ib, indexCount]() {
+        if (ib) {
+            ib->bind();
+            glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+        } else {
+            std::cerr << "[OpenGLCommandBuffer] ERROR: Attempted to draw indexed without a valid index buffer!" << std::endl;
+        }
     });
 }
 
@@ -69,7 +81,6 @@ void OpenGLCommandBuffer::executeAll() {
         if (_commands[i]) { // <-- 关键检查！
             _commands[i]();
         } else {
-            // 这会把崩溃变成一条错误信息
             std::cerr << "[Render Thread] ERROR: Command at index " << i << " is an empty std::function!" << std::endl;
         }
     }
@@ -77,4 +88,12 @@ void OpenGLCommandBuffer::executeAll() {
 
 void OpenGLCommandBuffer::reset() {
     _commands.clear();
+}
+
+void OpenGLCommandBuffer::setFrameIndex(int idx) {
+    _frameIndex = idx;
+}
+
+int OpenGLCommandBuffer::getFrameIndex() const { 
+    return _frameIndex;
 }

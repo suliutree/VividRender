@@ -108,7 +108,7 @@ int main() {
 
     // --- 构建 RenderGraph 中的 Pass ---
     auto clearPass  = std::make_shared<ClearPass>();
-    auto modelPass  = std::make_shared<ModelPass>(phong, model, tex, &camera, &aspect);
+    auto modelPass  = std::make_shared<ModelPass>(phong, model, &camera, &aspect);
 
     double lastTime = glfwGetTime();
 
