@@ -1,6 +1,8 @@
 # VividRender
 This is a light weight Render.
 
+![引擎处理流程](assets/images/Screenshot0.png)
+
 ![运行截图示例](assets/images/Screenshot1.png)
 
 ![运行截图示例](assets/images/Screenshot2.png)
@@ -9,19 +11,3 @@ This is a light weight Render.
 ```bash
 cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 ```
-
-
-Main Thread (CPU)                         Render Thread (GPU)
-┌──────── sample main ────────┐
-│ glfwPollEvents + Input      │
-│ camera.update()             │
-│ cmd = beginFrame()          │  wait fence? --┐
-│ RenderGraph.execute()       │                │
-│   ClearPass.record()        │                │
-│   ModelPass.record()        │                │
-│ endFrame(cmd)  ───────── push cmd ─────────► wait_and_pop()
-│                                ▲           executeAll()  gl*()
-│    (loop next frame)           │        glfwSwapBuffers()
-└────────────────────────────────┘        fence = glFenceSync()
-                                          processPendingResources()
-                                          (loop)
