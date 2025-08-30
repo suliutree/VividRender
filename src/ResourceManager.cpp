@@ -94,6 +94,25 @@ std::shared_ptr<Texture2D> ResourceManager::loadTextureFromMemory(const std::str
     return tex;
 }
 
+std::shared_ptr<Texture2D> ResourceManager::loadTextureFromRGBA(
+    const std::string& identifier, int w, int h, const unsigned char* rgba)
+{
+    std::lock_guard<std::mutex> lk(_mutex);
+
+    auto it = _textureCache.find(identifier);
+    if (it != _textureCache.end()) {
+        if (auto existing = it->second.lock()) {
+            return existing;
+        }
+    }
+
+    auto tex = std::make_shared<Texture2D>(identifier, w, h, rgba);
+    _device->registerResource(tex.get());   // 与其他加载路径保持一致：由设备统一调用 initializeGL()
+    _textureCache[identifier] = tex;
+    return tex;
+}
+
+
 std::shared_ptr<Model> ResourceManager::loadModel(const std::string& path)
 {
     std::lock_guard<std::mutex> lk(_mutex);

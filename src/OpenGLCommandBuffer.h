@@ -25,6 +25,7 @@ public:
     void setUniform1i(GLint location, GLint value) override;
 
     void setUniformMat4(GLint location, const float* value) override;
+    void setUniformMat3(GLint location, const float* value) override;
     void setUniform3f(GLint location, float x, float y, float z) override;
 
     // --- 供渲染线程调用的新接口 ---

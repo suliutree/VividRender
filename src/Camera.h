@@ -53,6 +53,29 @@ public:
         Position = FocalPoint - Front * Distance;
     }
 
+    void frame(const glm::vec3& center, const glm::vec3& halfSize, float aspect) {
+        FocalPoint = center;
+
+        // 用 AABB 的半宽/半高来计算需要的距离
+        float halfHeight = halfSize.y;
+        float halfWidth  = halfSize.x;
+
+        float vfov = glm::radians(Fov);
+        float hfov = 2.0f * std::atan(std::tan(vfov * 0.5f) * aspect);
+
+        float distV = halfHeight / std::tan(vfov * 0.5f);
+        float distH = halfWidth  / std::tan(hfov * 0.5f);
+
+        Distance = std::max(distV, distH) * 1.05f; // 稍微留点边（5% padding）
+
+        // 保障近平面/远平面合理
+        float radius = glm::length(halfSize);
+        Near = std::max(0.01f, Distance - radius * 2.0f);
+        Far  = Distance + radius * 2.0f;
+
+        update();
+    }
+
 
     // --- 输入处理函数变更 ---
 
@@ -91,7 +114,7 @@ public:
     // --- 公开的属性 ---
     float PanSpeed        = 5.0f;
     float MouseSensitivity= 0.1f;
-    float ZoomSensitivity = 1.0f;
+    float ZoomSensitivity = 0.2f;
     float Fov             = 60.0f;
     float Near            = 0.1f;
     float Far             = 1000.0f;

@@ -16,7 +16,6 @@ struct Vertex {
 class OpenGLIndexBuffer;
 class ResourceManager;
 
-/// 一整个 .obj（可能包含多个 Mesh）
 class Model : public IRenderResource {
 public:
     explicit Model(const std::string& path, ResourceManager* resMgr);
@@ -26,17 +25,20 @@ public:
 
     struct SubMesh {
         std::shared_ptr<IVertexBuffer> vb;
-        std::shared_ptr<OpenGLIndexBuffer> ib;   // 可选
+        std::shared_ptr<OpenGLIndexBuffer> ib; 
         unsigned indexCount;
         std::shared_ptr<Texture2D> albedoTexture;
+        glm::mat4 localTransform {1.0f};
     };
     const std::vector<SubMesh>& getSubMeshes() const { return _meshes; }
 
     glm::vec3 getCenter() const { return _center; }
+    glm::vec3 getHalfSize() const { return _halfSize; }
 
 private:
-    void processNode(aiNode* node, const aiScene* scene);
-    SubMesh processMesh(aiMesh* mesh, const aiScene* scene);
+    void computeBoundsWithNodes(const aiScene* scene);
+    void processNode(aiNode* node, const aiScene* scene, const aiMatrix4x4& parent);
+    SubMesh processMesh(aiMesh* mesh, const aiScene* scene, const aiMatrix4x4& globalXf);
     std::shared_ptr<Texture2D> loadMaterialTexture(
         aiMaterial* material,
         aiTextureType type,
@@ -52,4 +54,5 @@ private:
     std::vector<SubMesh>  _meshes;        // GPU 资源
 
     glm::vec3 _center;
+    glm::vec3 _halfSize;
 };

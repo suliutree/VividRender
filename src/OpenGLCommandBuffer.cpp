@@ -68,6 +68,13 @@ void OpenGLCommandBuffer::setUniformMat4(GLint location, const float* value) {
     });
 }
 
+void OpenGLCommandBuffer::setUniformMat3(GLint location, const float* value) {
+    glm::mat4 mat = glm::make_mat3(value);
+    _commands.emplace_back([location, mat]() {
+        glUniformMatrix3fv(location, 1, GL_FALSE, &mat[0][0]);
+    });
+}
+
 void OpenGLCommandBuffer::setUniform3f(GLint location, float x, float y, float z) {
     _commands.emplace_back([location, x, y, z]() {
         glUniform3f(location, x, y, z);

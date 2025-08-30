@@ -25,6 +25,26 @@ Texture2D::Texture2D(const std::string& identifier, const unsigned char* data, i
     }
 }
 
+Texture2D::Texture2D(const std::string& identifier, int w, int h, const unsigned char* rgba)
+    : _path(identifier)
+{
+    _w = w; _h = h; _c = 4;
+    if (rgba && _w > 0 && _h > 0) {
+        _dataRGBA.resize(static_cast<size_t>(_w) * static_cast<size_t>(_h) * 4);
+
+        // 垂直翻转：把第 y 行拷贝到翻转后的 (_h-1-y) 行
+        const size_t rowBytes = static_cast<size_t>(_w) * 4;
+        for (int y = 0; y < _h; ++y) {
+            const unsigned char* srcRow = rgba + static_cast<size_t>(y) * rowBytes;
+            unsigned char*       dstRow = _dataRGBA.data() + static_cast<size_t>(_h - 1 - y) * rowBytes;
+            std::memcpy(dstRow, srcRow, rowBytes);
+        }
+    } else {
+        std::cerr << "[Texture2D] Invalid RGBA data for: " << _path << std::endl;
+    }
+}
+
+
 Texture2D::~Texture2D() {
     if (_dataFromFile) {
         stbi_image_free(_dataFromFile);
@@ -40,7 +60,8 @@ Texture2D::~Texture2D() {
 
 
 void Texture2D::initializeGL() {
-    if (!_dataFromFile) return;  // 加载失败就跳过
+    // 没有任何数据就不创建
+    if (!_dataFromFile && _dataRGBA.empty()) return;
 
     glGenTextures(1, &_texID);
     glBindTexture(GL_TEXTURE_2D, _texID);
@@ -50,19 +71,52 @@ void Texture2D::initializeGL() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    GLenum fmt = GL_RGB;
-    if (_c == 1)      fmt = GL_RED;
-    else if (_c == 3) fmt = GL_RGB;
-    else if (_c == 4) fmt = GL_RGBA;
+    if (_dataFromFile) {
+        GLenum fmt = (_c == 1) ? GL_RED : (_c == 3 ? GL_RGB : GL_RGBA);
+        glTexImage2D(GL_TEXTURE_2D, 0, fmt, _w, _h, 0, fmt, GL_UNSIGNED_BYTE, _dataFromFile);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, fmt, _w, _h, 0, fmt, GL_UNSIGNED_BYTE, _dataFromFile);
+        stbi_image_free(_dataFromFile);
+        _dataFromFile = nullptr;
+        return;
+    }
+
+    // ★ 从 _dataRGBA 上传（已按行翻转，通道固定为 RGBA）
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _w, _h, 0, GL_RGBA, GL_UNSIGNED_BYTE, _dataRGBA.data());
     glGenerateMipmap(GL_TEXTURE_2D);
-
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    stbi_image_free(_dataFromFile);
-    _dataFromFile = nullptr;
+    // 释放 CPU 侧缓存
+    _dataRGBA.clear();
+    _dataRGBA.shrink_to_fit();
 }
+
+
+// void Texture2D::initializeGL() {
+//     if (!_dataFromFile) return;  // 加载失败就跳过
+
+//     glGenTextures(1, &_texID);
+//     glBindTexture(GL_TEXTURE_2D, _texID);
+
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+//     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+//     GLenum fmt = GL_RGB;
+//     if (_c == 1)      fmt = GL_RED;
+//     else if (_c == 3) fmt = GL_RGB;
+//     else if (_c == 4) fmt = GL_RGBA;
+
+//     glTexImage2D(GL_TEXTURE_2D, 0, fmt, _w, _h, 0, fmt, GL_UNSIGNED_BYTE, _dataFromFile);
+//     glGenerateMipmap(GL_TEXTURE_2D);
+
+//     glBindTexture(GL_TEXTURE_2D, 0);
+
+//     stbi_image_free(_dataFromFile);
+//     _dataFromFile = nullptr;
+// }
 
 void Texture2D::bind(GLenum unit) const {
     glActiveTexture(unit);

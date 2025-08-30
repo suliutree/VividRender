@@ -85,14 +85,14 @@ int main() {
 
     std::cout << "GL Error after resource load: " << glGetError() << std::endl;
 
+    int w = WindowWidth, h = WindowHeight;
+    glfwGetFramebufferSize(renderWindow, &w, &h);
+    float aspect = (float)w / (float)h;
 
-    // --- 摄像机 & 输入状态 ---
-    // *** 主要修改点 1: 初始化相机 ***
-    // 假设模型的中心点在 (0, 0.5f, 0)。
-    // Get the calculated center directly from the loaded model
     glm::vec3 modelCenter = model->getCenter();
-    // 使用新的构造函数，传入焦点和初始距离
-    Camera camera(modelCenter, 50.f);
+    glm::vec3 halfSize = model->getHalfSize();
+    Camera camera(modelCenter, 1.f);
+    camera.frame(modelCenter, halfSize, aspect); 
 
     InputState input;
     input.camera = &camera;
@@ -101,10 +101,6 @@ int main() {
     // *** 新增：需要为滚轮设置回调 ***
     glfwSetScrollCallback(renderWindow, scroll_callback); // 需要添加 scroll_callback 函数
 
-
-    int w = WindowWidth, h = WindowHeight;
-    glfwGetFramebufferSize(renderWindow, &w, &h);
-    float aspect = (float)w / (float)h;
 
     // --- 构建 RenderGraph 中的 Pass ---
     auto clearPass  = std::make_shared<ClearPass>();

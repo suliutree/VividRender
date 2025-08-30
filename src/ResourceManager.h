@@ -33,6 +33,10 @@ public:
         int len
     );
 
+    std::shared_ptr<Texture2D> loadTextureFromRGBA(const std::string& identifier,
+                                                   int w, int h,
+                                                   const unsigned char* rgba);
+
     std::shared_ptr<Model> loadModel(const std::string& path);
 
 private:

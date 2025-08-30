@@ -22,6 +22,7 @@ public:
     virtual void setUniform1i(GLint location, GLint value) = 0;
 
     virtual void setUniformMat4(GLint location, const float* value) = 0;
+    virtual void setUniformMat3(GLint location, const float* value) = 0;
     virtual void setUniform3f(GLint location, float x, float y, float z) = 0;
 
 };

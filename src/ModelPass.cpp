@@ -25,92 +25,67 @@ ModelPass::ModelPass(std::shared_ptr<PipelineState> p,
     name = "ModelPass";
 }
 
-const std::string& ModelPass::getName() const {
-    return name;
-}
-
+const std::string& ModelPass::getName() const { return name; }
 
 void ModelPass::execute(IDevice* device, ICommandBuffer* cmd)
 {
     cmd->bindPipeline(pipeline->getProgramID());
 
-    // std::cout << "program id: " << pipeline->getProgramID() << std::endl;
+    // 可按需居中/缩放
+    glm::mat4 globalModel = glm::mat4(1.0f);
+    // globalModel = glm::translate(globalModel, -model->getCenter());
+    globalModel = glm::scale(globalModel, glm::vec3(0.1f));
 
-    glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), -model->getCenter());
-    modelMat = glm::scale(modelMat, glm::vec3(0.1f));
-
-    // ─────────────── 摄像机&投影 ───────────────
     glm::mat4 view = camera->getView();
     glm::mat4 proj = camera->getProj(*aspect);
-    // glm::mat4 projMat = glm::perspective(glm::radians(camera->getZoom()), *aspect, 0.1f, 1000.0f);
-
 
     GLint locModel = pipeline->getUniformLocation("uModel");
-    GLint locView = pipeline->getUniformLocation("uView");
-    GLint locProj = pipeline->getUniformLocation("uProj");
-    cmd->setUniformMat4(locModel, &modelMat[0][0]);
+    GLint locView  = pipeline->getUniformLocation("uView");
+    GLint locProj  = pipeline->getUniformLocation("uProj");
+    CHECK_UNIFORM(locModel, "uModel");
+    CHECK_UNIFORM(locView,  "uView");
+    CHECK_UNIFORM(locProj,  "uProj");
+
     cmd->setUniformMat4(locView, &view[0][0]);
     cmd->setUniformMat4(locProj, &proj[0][0]);
 
-    // ─────────────── 光照 & 观察者 ───────────────
+    // 光照
     glm::vec3 lightDir = glm::normalize(glm::vec3(0.5f, -1.f, 0.3f));
-
     GLint locLight = pipeline->getUniformLocation("uLightDir");
     GLint locViewP = pipeline->getUniformLocation("uViewPos");
+    if (locLight != -1) cmd->setUniform3f(locLight, lightDir.x, lightDir.y, lightDir.z);
+    if (locViewP != -1) cmd->setUniform3f(locViewP, camera->Position.x, camera->Position.y, camera->Position.z);
 
-    cmd->setUniform3f(locLight,
-                      lightDir.x, lightDir.y, lightDir.z);
-    cmd->setUniform3f(locViewP,
-                      camera->Position.x, camera->Position.y, camera->Position.z);
+    // 采样器
+    GLint locTex = pipeline->getUniformLocation("uAlbedo");
+    if (locTex != -1) cmd->setUniform1i(locTex, 0);
 
-    // ─────────────── 纹理 ───────────────
-    // albedo->bind(GL_TEXTURE0); 直接这样调用是有问题的，相当于在非 OpenGL Contex 下调用了 GL 函数，一定要通过 Commond Buffer
-
-    GLint locTex   = pipeline->getUniformLocation("uAlbedo");
-    cmd->setUniform1i(locTex, 0);
-
-    // ─────────────── Draw 所有 SubMesh ───────────────
-
-    // for (std::size_t idx = 0; idx < model->getSubMeshes().size(); ++idx) {
-    //     const auto& sm = model->getSubMeshes()[idx];
-
-    //     if (sm.indexCount == 0) {
-    //         std::cerr << "[ModelPass] SubMesh #" << idx << " has 0 indices, skip\n";
-    //         continue;
-    //     }
-
-    //     glm::mat4 modelM(1.0f);          // 先统一 1，再按需 scale
-    //     modelM = glm::scale(modelM, glm::vec3(0.2f));
-
-    //     GLint locModel = pipeline->getUniformLocation("uModel");
-    //     cmd->setUniformMat4(locModel, &modelM[0][0]);
-
-    //     // 绑定 VAO & EBO
-    //     const GLuint vao = static_cast<OpenGLVertexBuffer*>(sm.vb.get())->getVAO();
-    //     if (vao == 0) {
-    //         std::cerr << "[ModelPass] SubMesh #" << idx << " VAO == 0 (uninit?)\n";
-    //         continue;
-    //     }
-    //     cmd->bindVertexArray(vao);
-    //     static_cast<OpenGLIndexBuffer*>(sm.ib.get())->bind();
-
-    //     cmd->draw(sm.indexCount);
-    // }
+    // ★（可选）法线矩阵，如果着色器支持 uNormalMat（mat3）
+    GLint locNormalMat = pipeline->getUniformLocation("uNormalMat");
 
     for (const auto& submesh : model->getSubMeshes()) {
-        // 绑定该 SubMesh 的 VAO
+        // ★ 每个 submesh 的最终模型矩阵
+        glm::mat4 modelMat = globalModel * submesh.localTransform;
+        cmd->setUniformMat4(locModel, &modelMat[0][0]);
+
+        if (locNormalMat != -1) {
+            glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelMat)));
+            cmd->setUniformMat3(locNormalMat, &normalMat[0][0]);
+        }
+
+        // 绑定 VAO
         auto gl_vb = std::static_pointer_cast<OpenGLVertexBuffer>(submesh.vb);
         cmd->bindVertexArray(gl_vb->getVAO());
 
-        // 绑定该 SubMesh 的纹理
+        // 绑定纹理
         if (submesh.albedoTexture) {
             cmd->bindTexture(GL_TEXTURE0, submesh.albedoTexture->getID());
         } else {
-            // 可选：如果没纹理，绑定一个1x1的白色纹理
+            // 没有纹理可绑定白贴图，避免采样到历史绑定
             // cmd->bindTexture(GL_TEXTURE0, defaultWhiteTextureID);
         }
 
-        // 使用索引绘制
+        // 绘制
         cmd->drawIndexed(submesh.ib, submesh.indexCount);
     }
 
